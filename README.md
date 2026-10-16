@@ -2,11 +2,22 @@
 
 系統依「最近 7 天移動平均＋20% 安全庫存」計算建議補貨量，最後數量由店長確認或修改後送出。
 
-## 執行
+線上版：https://tongjia-auto-replenish.pages.dev/ （第一次開啟需載入約 20～30 秒）
+
+## 本機執行
 
 ```bash
 pip install -r requirements.txt
 streamlit run app.py
+```
+
+## 線上版（Cloudflare Pages）
+
+`index.html` 用 [stlite](https://github.com/whitphx/stlite) 在瀏覽器內執行同一份 `app.py`，不需要 Python 伺服器。更新部署：
+
+```bash
+mkdir -p dist && cp index.html app.py replenish.py dist/
+npx wrangler pages deploy dist --project-name tongjia-auto-replenish --branch main
 ```
 
 ## 檔案
