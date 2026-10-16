@@ -6,7 +6,8 @@ STORE_NAME = "統家便利商店 示範門市"
 
 SAFETY_RATE = 0.20      # 安全庫存 = 預測 × 20%
 LOW_STOCK_RATE = 0.50   # 低庫存：現有庫存 < 預測 × 50%
-SPECIAL_RATE = 3        # 特殊訂單：店長量 > 預測 × 3
+SPECIAL_RATE = 3        # 特殊訂單比例條件：店長量 > max(系統建議, 1) × 3
+SPECIAL_MIN_DIFF = 20   # 特殊訂單差距條件：店長量 − 系統建議 ≥ 20
 
 STATUS_NORMAL = "🟢 正常"
 STATUS_SUGGEST = "🔵 建議補貨"
@@ -17,7 +18,7 @@ STATUS_NOTE = {
     STATUS_NORMAL: "庫存足夠，不需補貨。",
     STATUS_SUGGEST: "系統計算後需要補貨。",
     STATUS_LOW: "目前庫存明顯低於預測需求。",
-    STATUS_SPECIAL: "店長修改後的數量明顯高於平常需求。",
+    STATUS_SPECIAL: "店長修改後的數量明顯高於系統建議。",
 }
 
 # 最近 7 天銷售量（由舊到新）與今晚盤點的現有庫存
@@ -48,13 +49,18 @@ def calc(product):
     return {"total": total, "forecast": forecast, "safety": safety, "suggested": suggested}
 
 
-def is_special(final_qty, forecast):
-    return final_qty > forecast * SPECIAL_RATE
+def is_special(final_qty, suggested):
+    """比例與差距兩個條件同時成立才算特殊訂單，避免小幅修改被誤判。
+
+    系統建議為 0 時乘 3 沒有意義，所以比例的比較基準至少用 1。
+    """
+    base = max(suggested, 1)
+    return final_qty > base * SPECIAL_RATE and final_qty - suggested >= SPECIAL_MIN_DIFF
 
 
 def status_of(stock, forecast, suggested, final_qty):
     """優先順序：特殊訂單 > 低庫存 > 建議補貨 > 正常。"""
-    if is_special(final_qty, forecast):
+    if is_special(final_qty, suggested):
         return STATUS_SPECIAL
     if stock < forecast * LOW_STOCK_RATE:
         return STATUS_LOW

@@ -10,7 +10,7 @@ import pandas as pd
 import streamlit as st
 
 from replenish import (
-    PRODUCTS, SAFETY_RATE, SPECIAL_RATE, STATUS_LOW, STATUS_NORMAL, STATUS_NOTE,
+    PRODUCTS, SAFETY_RATE, SPECIAL_MIN_DIFF, SPECIAL_RATE, STATUS_LOW, STATUS_NORMAL, STATUS_NOTE,
     STATUS_SPECIAL, STATUS_SUGGEST, STORE_NAME, calc, is_special, sales_dates, status_of,
 )
 
@@ -63,8 +63,11 @@ def init_state():
 
 
 def reset_demo():
+    # 側邊欄頁面選單（page）不刪除，改成指定回首頁，畫面和選單才會同步
     for key in list(st.session_state.keys()):
-        del st.session_state[key]
+        if key != "page":
+            del st.session_state[key]
+    st.session_state.page = "首頁"
 
 
 def go(page):
@@ -113,6 +116,11 @@ def page_dashboard():
     st.title("首頁")
     st.markdown(f"<div class='muted'>{STORE_NAME}　｜　每日定期盤點制＋安全庫存管理</div>",
                 unsafe_allow_html=True)
+    st.markdown(
+        "<div class='muted' style='margin-top:6px'>本系統依近期銷售紀錄與現有庫存產生補貨建議，"
+        "實際需求仍可能受天氣、活動、節慶等因素影響，最終補貨量由店長確認。</div>",
+        unsafe_allow_html=True,
+    )
     st.write("")
 
     need = [r for r in rows if r["final"] > 0]
@@ -121,7 +129,7 @@ def page_dashboard():
 
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("今日日期", today.strftime("%Y/%m/%d"))
-    c2.metric("今日待確認商品數", f"{len(need)} 項")
+    c2.metric("今日需補貨品項", f"{len(need)} 項")
     c3.metric("低庫存商品數", f"{count[STATUS_LOW]} 項")
     c4.metric("特殊訂單數", f"{count[STATUS_SPECIAL]} 項")
 
@@ -171,7 +179,6 @@ def page_list():
         "商品名稱": r["name"],
         "分類": r["category"],
         "現有庫存": r["stock"],
-        "最近7天平均": r["avg"],
         "預測明日銷售": r["forecast"],
         "安全庫存": r["safety"],
         "系統建議補貨量": r["suggested"],
@@ -191,9 +198,8 @@ def page_list():
         disabled=True if locked else [c for c in df.columns if c not in editable],
         column_config={
             "分類": st.column_config.TextColumn(width="small"),
-            "最近7天平均": st.column_config.NumberColumn("7天平均", format="%.1f",
-                                                       help="最近 7 天平均銷售"),
-            "預測明日銷售": st.column_config.NumberColumn("預測明日", help="預測明日銷售"),
+            "預測明日銷售": st.column_config.NumberColumn(
+                "預測明日", help="預測明日銷售（最近 7 天平均，計算過程見「商品明細」）"),
             "系統建議補貨量": st.column_config.NumberColumn("系統建議", help="系統建議補貨量"),
             "店長最後補貨量": st.column_config.NumberColumn("✏️ 店長最後補貨量", min_value=0, step=1,
                                                            format="%d",
@@ -232,8 +238,13 @@ def page_list():
     with st.expander("狀態說明"):
         for s, note in STATUS_NOTE.items():
             st.markdown(f"- **{s}**：{note}")
-        st.markdown(f"- 低庫存判定：現有庫存 < 預測明日銷售 × 50%")
-        st.markdown(f"- 特殊訂單判定：店長最後補貨量 > 預測明日銷售 × {SPECIAL_RATE}")
+        st.markdown("- 低庫存判定：現有庫存 < 預測明日銷售 × 50%")
+        st.markdown(f"- 特殊訂單判定：以下兩個條件同時成立"
+                    f"（系統建議為 0 時，比例條件以 1 計算）\n"
+                    f"    - 店長最後補貨量 > 系統建議 × {SPECIAL_RATE}\n"
+                    f"    - 店長最後補貨量比系統建議多 {SPECIAL_MIN_DIFF} 件以上")
+        st.markdown("- 若同時符合多個條件，系統會優先顯示較需要注意的狀態。"
+                    "優先順序：特殊訂單 > 低庫存 > 建議補貨 > 正常。")
 
     st.write("")
     st.button("前往補貨單確認 →", on_click=go, args=("補貨單確認",), type="primary")
@@ -296,7 +307,8 @@ def page_detail():
     raw_need = r["forecast"] + r["safety"] - r["stock"]
     result = f"<b>{raw_need}</b>" if raw_need >= 0 else f"{raw_need} → 小於 0，設為 <b>0</b>"
     lines = [
-        f"預測明日銷售 = 最近 7 天銷售總和 ÷ 7 = ({plus}) ÷ 7 = {r['total']} ÷ 7 ≈ <b>{r['forecast']}</b>",
+        f"預測明日銷售 = 最近 7 天銷售總和 ÷ 7 = ({plus}) ÷ 7 = {r['total']} ÷ 7"
+        f" = {r['avg']:.1f} ≈ <b>{r['forecast']}</b>",
         f"安全庫存 = 預測明日銷售 × {int(SAFETY_RATE * 100)}% = {r['forecast']} × {SAFETY_RATE:.1f}"
         f" = {r['forecast'] * SAFETY_RATE:.1f} ≈ <b>{r['safety']}</b>",
         f"建議補貨量 = 預測明日銷售 + 安全庫存 − 現有庫存"
@@ -304,6 +316,9 @@ def page_detail():
     ]
     st.markdown(f"<div class='formula'>{'<br>'.join(lines)}</div>", unsafe_allow_html=True)
     st.caption("所有數量皆四捨五入取整數；假設今晚下單、明早到貨。")
+    st.caption("本系統採用簡單 7 日移動平均，讓店長可以直接理解預測依據。")
+    st.caption(f"本課堂示範版將安全庫存簡化設定為預測需求的 {int(SAFETY_RATE * 100)}%；"
+               "實際企業可依商品銷售波動、供貨時間及缺貨成本調整。")
 
 
 # ---------- 4. 補貨單確認 ----------
@@ -343,7 +358,7 @@ def page_confirm():
     if st.session_state.submitted:
         return
 
-    specials = [r for r in order if is_special(r["final"], r["forecast"])]
+    specials = [r for r in order if is_special(r["final"], r["suggested"])]
     if specials:
         st.subheader("特殊訂單確認")
         for r in specials:
