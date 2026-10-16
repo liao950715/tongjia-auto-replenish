@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <title>統家自動補貨系統</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@stlite/browser@1.9.2/build/stlite.css" />
+    <style>
+      body { margin: 0; background: #ffffff; }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <!-- 線上版：用 stlite 在瀏覽器內執行同一份 app.py（Pyodide），不需要 Python 伺服器 -->
+    <script type="module">
+      import { mount } from "https://cdn.jsdelivr.net/npm/@stlite/browser@1.9.2/build/stlite.js";
+      mount(
+        {
+          requirements: ["altair"],
+          entrypoint: "app.py",
+          files: {
+            "app.py": { url: "./app.py" },
+            "replenish.py": { url: "./replenish.py" },
+          },
+          streamlitConfig: {
+            "theme.base": "light",
+            "theme.primaryColor": "#0f766e",
+            "theme.backgroundColor": "#ffffff",
+            "theme.secondaryBackgroundColor": "#f6f7f9",
+            "theme.textColor": "#1f2328",
+            "theme.font": "sans serif",
+            "client.toolbarMode": "viewer",
+          },
+        },
+        document.getElementById("root"),
+      );
+    </script>
+  </body>
+</html>
