@@ -7,6 +7,7 @@ const context = vm.createContext({Intl,Date,console,setTimeout:()=>0,clearTimeou
 vm.runInContext(fs.readFileSync(__dirname+"/app.js","utf8"),context);
 const run = code => vm.runInContext(code,context);
 assert.equal(run('stats().total'),72);
+assert.equal(run('stats().suggested'),72);
 assert.equal(run('stats().count'),6);
 assert.equal(run('stats().low'),2);
 assert.equal(run('JSON.stringify(PRODUCTS.map(p=>calc(p).suggested))'),'[35,16,10,5,3,3,0,0]');
@@ -14,6 +15,8 @@ assert.equal(run('validQty(-1)||validQty(1.5)||validQty(Infinity)||validQty(1000
 assert.equal(run('updateQty("P006","")'),false);
 assert.equal(run('updateQty("P006","1000")'),true);
 assert.equal(run('canSubmit()'),false);
+assert.equal(run('stats().suggested'),72);
+assert.equal(run('stats().total'),1069);
 run('state.draft.P006.reason="活動團購";state.draft.P006.confirmed=true');
 assert.equal(run('canSubmit()'),true);
 run('updateQty("P006","1001")');
