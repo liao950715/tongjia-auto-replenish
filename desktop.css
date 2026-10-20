@@ -266,6 +266,21 @@
   .brand-en, .nav-label { display: none; }
   .store { margin-top: 28px; margin-bottom: 23px; padding: 12px 0 4px; border: 0; gap: 7px; }
   .store strong { font-size: 13px; }
+  #store-switch {
+    width: 100%;
+    min-height: 38px;
+    padding: 7px 10px;
+    color: #f7f4ef;
+    background: #31414a;
+    border: 1px solid #56656c;
+    border-radius: 8px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  #store-switch:hover, #store-switch:focus-visible { border-color: #eeac88; }
+  #store-area { padding-left: 2px; }
   nav button { margin: 2px 0; }
   .side-bottom details { border-top: 1px solid #42515b; }
 
@@ -384,6 +399,29 @@
   .date-box .pill { background: #f2f3f1; color: #646e72; }
   .recommendation { background: #fff4eb; border-color: #f1e1d2; }
   .recommendation strong { color: #b76139; }
+  .success {
+    display: grid;
+    grid-template-columns: minmax(210px, 1fr) minmax(310px, 1.6fr) auto;
+    align-items: center;
+    gap: 24px;
+    margin-bottom: 18px;
+    padding: 20px 24px;
+    background: #fff;
+    border: 1px solid #e5e7e3;
+    border-radius: 12px;
+  }
+  .success h2 { margin: 7px 0 4px; color: #20252a; }
+  .success p { margin: 0; color: #667177; font-size: 12px; }
+  .status-label { color: #b15f3a; font-size: 11px; font-weight: 700; }
+  .order-progress { display: flex; gap: 15px; }
+  .progress-step { display: flex; align-items: center; gap: 9px; color: #69767a; }
+  .progress-step > span { display: grid; place-items: center; width: 26px; height: 26px; border: 1px solid #cbd0ce; border-radius: 50%; font-size: 10px; font-weight: 700; }
+  .progress-step.done > span { color: #fff; background: #d97745; border-color: #d97745; }
+  .progress-step strong, .progress-step small { display: block; white-space: nowrap; }
+  .progress-step strong { color: #253138; font-size: 12px; }
+  .progress-step small { margin-top: 2px; color: #778184; font-size: 10px; }
+  .order-actions, .history-actions { display: flex; flex-direction: column; align-items: stretch; gap: 8px; }
+  .order-actions button, .history-actions button { white-space: nowrap; }
 }
 
 @media (min-width: 761px) {
@@ -396,4 +434,9 @@
   .panel-head { padding-top: 14px; padding-bottom: 10px; }
   .filters { padding-bottom: 8px; }
   th { padding-top: 11px; padding-bottom: 11px; }
+}
+
+@media (min-width: 761px) and (max-width: 1400px) {
+  .success { grid-template-columns: 1fr 1.4fr; }
+  .order-actions { flex-direction: row; grid-column: 1 / -1; }
 }
