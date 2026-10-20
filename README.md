@@ -46,10 +46,10 @@
 
 ## 靜態部署
 
-將 index.html、styles.css、app.js 放入網站的發布資料夾即可。既有 Cloudflare Pages 專案可使用：
+將 index.html、styles.css、desktop.css、app.js 放入網站的發布資料夾即可。既有 Cloudflare Pages 專案可使用：
 
     New-Item -ItemType Directory -Force dist
-    Copy-Item index.html,styles.css,app.js dist
+    Copy-Item index.html,styles.css,desktop.css,app.js dist
     npx wrangler pages deploy dist --project-name tongjia-auto-replenish --branch main
 
 此指令會更新正式站台；本次程式改版不會自行執行。
@@ -61,6 +61,7 @@ app.py、replenish.py 與 requirements.txt 保留供模型與課堂程式對照�
 ## 檔案
 
 - index.html：新版介面入口
-- styles.css：響應式版面與設計樣式
+- styles.css：基礎版面與設計樣式
+- desktop.css：桌面視覺設計
 - app.js：示範資料、補貨規則、互動、儲存與 CSV
 - test.cjs：關鍵業務流程回歸測試
